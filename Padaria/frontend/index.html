@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Padaria</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Padaria</h1>
+  <label>Usuário <input id="user" value="gerente" size="10"></label>
+  <span id="cash-badge" class="badge"></span>
+</header>
+<nav>
+  <button data-tab="pdv" class="on">Caixa / Venda</button><button data-tab="prod">Produtos</button>
+  <button data-tab="comp">Compras</button><button data-tab="est">Estoque</button>
+  <button data-tab="car">Carnê</button><button data-tab="rel">Fechamento</button>
+</nav>
+<main>
+<!-- ============ PDV ============ -->
+<section id="t-pdv" class="tab">
+  <div class="card"><b>Caixa:</b> <span id="cash-info"></span>
+    <span id="cash-open"><input id="opening" placeholder="Troco inicial R$" size="14"> <button onclick="openCash()">Abrir caixa</button></span>
+    <span id="cash-close" hidden><input id="closing" placeholder="Valor contado R$" size="14"> <button onclick="closeCash()">Fechar caixa</button></span>
+  </div>
+  <div class="grid">
+    <div class="card"><h3>Itens</h3>
+      <div class="row"><input id="item" list="plist" placeholder="Código de barras ou nome" style="flex:1"><input id="qty" value="1" size="5"><button onclick="addItem()">Adicionar</button></div>
+      <table><thead><tr><th>Produto</th><th>Qtd</th><th>Preço</th><th>Total</th><th></th></tr></thead><tbody id="cart"></tbody></table>
+      <div class="row">Desconto R$ <input id="discount" size="8" value="0" oninput="renderTotals()"></div>
+    </div>
+    <div class="card"><h3>Pagamento</h3>
+      <div class="row">
+        <select id="pm" onchange="payFields()"><option value="PIX">Pix</option><option value="CREDIT">Crédito</option><option value="DEBIT">Débito</option><option value="CASH">Dinheiro</option><option value="CHECK">Cheque</option><option value="INSTALLMENT">Carnê (a prazo)</option></select>
+        <input id="pamt" placeholder="Valor R$" size="9"><button onclick="addPay()">+ Pagamento</button>
+      </div>
+      <div class="row x x-card"><input id="nsu" placeholder="NSU / ID da transação (opcional)" style="flex:1"></div>
+      <div class="row x x-CHECK" hidden><input id="ck-bank" placeholder="Banco"><input id="ck-num" placeholder="Nº cheque"><input id="ck-holder" placeholder="Titular"><input id="ck-due" type="date"></div>
+      <div class="row x x-INSTALLMENT" hidden>Parcelas <input id="in-n" type="number" min="1" max="24" value="3" style="width:60px"> 1º venc. <input id="in-due" type="date"> <small>(exige cliente)</small></div>
+      <div class="row">Cliente <select id="sale-customer"></select></div>
+      <table><tbody id="pays"></tbody></table>
+      <div id="totals" class="totals"></div>
+      <button class="big" onclick="finishSale()">Finalizar venda</button>
+    </div>
+  </div>
+  <div class="card row">Cancelar venda nº <input id="cancel-id" size="6"> <button class="danger" onclick="cancelSale()">Cancelar (estorna estoque)</button></div>
+</section>
+
+<!-- ============ PRODUTOS ============ -->
+<section id="t-prod" class="tab" hidden>
+  <div class="card"><h3>Novo produto</h3><div class="row">
+    <input id="p-name" placeholder="Nome"><input id="p-bar" placeholder="Código de barras">
+    <select id="p-unit"><option>UN</option><option>KG</option></select><input id="p-cost" placeholder="Custo R$" size="9">
+    <button onclick="createProduct()">Salvar</button></div>
+    <small>O preço pode ser alterado a qualquer momento. Use "Preço" na lista e, se quiser, informe a data de vigência.</small></div>
+  <div class="card"><table><thead><tr><th>Nome</th><th>Código</th><th>Un</th><th>Custo</th><th>Preço</th><th>Estoque</th><th></th></tr></thead><tbody id="prod-list"></tbody></table></div>
+</section>
+
+<!-- ============ COMPRAS ============ -->
+<section id="t-comp" class="tab" hidden>
+  <div class="card"><h3>Fornecedor</h3><div class="row">
+    <input id="s-name" placeholder="Nome"><input id="s-doc" placeholder="CNPJ/CPF"><input id="s-phone" placeholder="Telefone">
+    <button onclick="createSupplier()">Cadastrar</button></div></div>
+  <div class="card"><h3>Receber mercadoria</h3>
+    <div class="row">Fornecedor <select id="pu-sup"></select> <input id="pu-inv" placeholder="Nº nota"></div>
+    <div class="row"><select id="pu-prod"></select><input id="pu-qty" placeholder="Qtd" size="6"><input id="pu-cost" placeholder="Custo unit. R$" size="10"><button onclick="addPurchaseItem()">+ Item</button></div>
+    <table><tbody id="pu-items"></tbody></table>
+    <button class="big" onclick="sendPurchase()">Confirmar recebimento</button></div>
+</section>
+
+<!-- ============ ESTOQUE ============ -->
+<section id="t-est" class="tab" hidden>
+  <div class="card"><h3>Ajuste / perda</h3><div class="row">
+    <select id="ad-prod"></select><select id="ad-type"><option value="ADJUSTMENT">Ajuste</option><option value="LOSS">Perda</option></select>
+    <input id="ad-qty" placeholder="Qtd (+/-)" size="8"><input id="ad-reason" placeholder="Motivo" style="flex:1"><button onclick="adjustStock()">Lançar</button></div></div>
+  <div class="card"><table><thead><tr><th>Produto</th><th>Un</th><th>Saldo</th></tr></thead><tbody id="est-list"></tbody></table></div>
+</section>
+
+<!-- ============ CARNÊ ============ -->
+<section id="t-car" class="tab" hidden>
+  <div class="card"><h3>Novo cliente</h3><div class="row">
+    <input id="c-name" placeholder="Nome"><input id="c-doc" placeholder="CPF"><input id="c-phone" placeholder="Telefone"><input id="c-limit" placeholder="Limite R$" size="9">
+    <button onclick="createCustomer()">Cadastrar</button></div></div>
+  <div class="card"><h3>Parcelas</h3><div class="row">Cliente <select id="r-customer" onchange="loadReceivables()"></select>
+    Status <select id="r-status" onchange="loadReceivables()"><option>OPEN</option><option>PAID</option><option>CANCELED</option></select></div>
+    <table><thead><tr><th>#</th><th>Cliente</th><th>Venda</th><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Pago</th><th></th></tr></thead><tbody id="rec-list"></tbody></table></div>
+  <div class="card"><h3>Receber parcela</h3><div class="row">
+    Parcela <input id="r-id" size="5"> Valor R$ <input id="r-amt" size="9">
+    <select id="r-method"><option value="CASH">Dinheiro</option><option value="PIX">Pix</option><option value="DEBIT">Débito</option><option value="CREDIT">Crédito</option><option value="CHECK">Cheque</option></select>
+    <button onclick="payReceivable()">Receber</button></div></div>
+</section>
+
+<!-- ============ RELATÓRIO ============ -->
+<section id="t-rel" class="tab" hidden>
+  <div class="card row">Dia <input id="rel-day" type="date"> <button onclick="loadReport()">Ver fechamento</button></div>
+  <div class="card" id="rel-out"></div>
+</section>
+</main>
+<datalist id="plist"></datalist>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body></html>
