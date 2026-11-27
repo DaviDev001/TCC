@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AutoPrime — Concessionária</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside>
+  <div class="logo">AutoPrime</div>
+  <nav>
+    <button data-tab="dash" class="on">Dashboard</button><button data-tab="est">Estoque</button>
+    <button data-tab="lead">Leads</button><button data-tab="td">Test-drive</button>
+    <button data-tab="venda">Vendas</button><button data-tab="cli">Clientes</button>
+    <button data-tab="vend">Vendedores</button>
+  </nav>
+  <label class="user">Usuário<input id="user" value="beta-1"></label>
+</aside>
+<main>
+<!-- DASHBOARD -->
+<section id="t-dash" class="tab">
+  <div class="top"><h2>Dashboard</h2><input id="d-month" type="month" onchange="loadDash()"></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid">
+    <div class="card"><h3>Estoque por status</h3><div id="d-status"></div></div>
+    <div class="card"><h3>Funil de leads</h3><div id="d-funnel"></div></div>
+  </div>
+  <div class="card"><h3>Ranking de vendedores no mês</h3><table><thead><tr><th>Vendedor</th><th>Vendas</th><th>Faturamento</th><th>Comissão</th></tr></thead><tbody id="d-rank"></tbody></table></div>
+</section>
+
+<!-- ESTOQUE -->
+<section id="t-est" class="tab" hidden>
+  <div class="top"><h2>Estoque</h2><button onclick="$('#v-form').hidden=!$('#v-form').hidden">+ Novo veículo</button></div>
+  <div class="card" id="v-form" hidden><h3>Cadastrar veículo</h3>
+    <div class="fg">
+      <input id="v-brand" placeholder="Marca"><input id="v-model" placeholder="Modelo"><input id="v-version" placeholder="Versão">
+      <input id="v-yf" type="number" placeholder="Ano fab."><input id="v-ym" type="number" placeholder="Ano modelo"><input id="v-color" placeholder="Cor">
+      <input id="v-plate" placeholder="Placa (ABC1D23)"><input id="v-chassis" placeholder="Chassi (17)"><input id="v-km" type="number" placeholder="Km">
+      <select id="v-fuel"><option>FLEX</option><option>GASOLINA</option><option>ETANOL</option><option>DIESEL</option><option>HIBRIDO</option><option>ELETRICO</option><option>GNV</option></select>
+      <select id="v-trans"><option>MANUAL</option><option>AUTOMATICO</option><option>CVT</option><option>AUTOMATIZADO</option></select>
+      <select id="v-cond"><option>USADO</option><option>NOVO</option></select>
+      <input id="v-cost" placeholder="Custo de compra R$"><input id="v-price" placeholder="Preço de venda R$"><input id="v-notes" placeholder="Observações">
+    </div><button onclick="createVehicle()">Salvar veículo</button></div>
+  <div class="card row"><input id="e-q" placeholder="Buscar marca, modelo, placa, cor…" oninput="loadVehicles()" style="flex:1">
+    <select id="e-status" onchange="loadVehicles()"><option value="">Todos (exceto baixados)</option><option>DISPONIVEL</option><option>RESERVADO</option><option>MANUTENCAO</option><option>VENDIDO</option></select></div>
+  <div class="card"><table><thead><tr><th>Veículo</th><th>Cor</th><th>Placa</th><th>Km</th><th>Custo total</th><th>Preço</th><th>Margem</th><th>Status</th><th></th></tr></thead><tbody id="v-list"></tbody></table></div>
+</section>
+
+<!-- LEADS -->
+<section id="t-lead" class="tab" hidden>
+  <div class="top"><h2>Leads / Funil</h2></div>
+  <div class="card"><h3>Novo lead</h3><div class="fg">
+    <input id="l-name" placeholder="Nome"><input id="l-phone" placeholder="Telefone"><input id="l-email" placeholder="E-mail">
+    <select id="l-source"><option>LOJA</option><option>SITE</option><option>INDICACAO</option><option>REDES</option><option>TELEFONE</option></select>
+    <select id="l-vehicle"></select><select id="l-seller"></select><input id="l-notes" placeholder="Observações"></div>
+    <button onclick="createLead()">Adicionar lead</button></div>
+  <div class="board" id="board"></div>
+</section>
+
+<!-- TEST-DRIVE -->
+<section id="t-td" class="tab" hidden>
+  <div class="top"><h2>Test-drive</h2></div>
+  <div class="card"><h3>Agendar</h3><div class="fg">
+    <select id="td-vehicle"></select><input id="td-name" placeholder="Nome do cliente"><input id="td-phone" placeholder="Telefone">
+    <input id="td-cnh" placeholder="CNH"><select id="td-seller"></select><input id="td-when" type="datetime-local"></div>
+    <button onclick="scheduleDrive()">Agendar</button></div>
+  <div class="card"><table><thead><tr><th>Data</th><th>Veículo</th><th>Cliente</th><th>Telefone</th><th>Status</th><th></th></tr></thead><tbody id="td-list"></tbody></table></div>
+</section>
+
+<!-- VENDAS -->
+<section id="t-venda" class="tab" hidden>
+  <div class="top"><h2>Vendas</h2></div>
+  <div class="grid">
+    <div class="card"><h3>Nova venda</h3>
+      <div class="fg1">
+        <label>Veículo<select id="s-vehicle" onchange="renderSale()"></select></label>
+        <label>Cliente<select id="s-customer"></select></label>
+        <label>Vendedor<select id="s-seller"></select></label>
+        <label>Lead (opcional)<select id="s-lead"></select></label>
+        <label>Desconto R$<input id="s-discount" value="0" oninput="renderSale()"></label>
+        <label>Aprovado por (desconto acima do limite)<input id="s-approved" placeholder="Nome do gerente"></label>
+      </div>
+      <div id="s-sum" class="sum"></div>
+    </div>
+    <div class="card"><h3>Pagamento</h3>
+      <div class="row"><select id="pm" onchange="payFields()"><option value="PIX">Pix</option><option value="TED">TED</option><option value="DINHEIRO">Dinheiro</option><option value="CARTAO">Cartão</option><option value="CHEQUE">Cheque</option><option value="FINANCIAMENTO">Financiamento</option><option value="TROCA">Veículo na troca</option></select>
+        <input id="pamt" placeholder="Valor R$" size="12"><button onclick="addPay()">+ Adicionar</button></div>
+      <div class="row x x-FINANCIAMENTO" hidden><input id="f-bank" placeholder="Banco"><input id="f-n" type="number" placeholder="Parcelas" style="width:100px"></div>
+      <div class="row x x-TROCA" hidden><input id="t-brand" placeholder="Marca"><input id="t-model" placeholder="Modelo"><input id="t-year" type="number" placeholder="Ano" style="width:90px"><input id="t-plate" placeholder="Placa"><input id="t-color" placeholder="Cor"><input id="t-km" type="number" placeholder="Km"></div>
+      <table><tbody id="s-pays"></tbody></table>
+      <button class="big" onclick="finishSale()">Fechar venda</button>
+    </div>
+  </div>
+  <div class="card row"><h3 style="margin:0">Histórico</h3><input id="s-month" type="month" onchange="loadSales()"></div>
+  <div class="card"><table><thead><tr><th>#</th><th>Data</th><th>Veículo</th><th>Cliente</th><th>Vendedor</th><th>Valor final</th><th>Lucro</th><th>Comissão</th><th>Pagamento</th><th></th></tr></thead><tbody id="s-list"></tbody></table></div>
+</section>
+
+<!-- CLIENTES -->
+<section id="t-cli" class="tab" hidden>
+  <div class="top"><h2>Clientes</h2></div>
+  <div class="card"><div class="fg"><input id="c-name" placeholder="Nome"><input id="c-doc" placeholder="CPF/CNPJ"><input id="c-phone" placeholder="Telefone"><input id="c-email" placeholder="E-mail"><input id="c-city" placeholder="Cidade"></div>
+    <button onclick="createCustomer()">Cadastrar</button></div>
+  <div class="card"><input id="c-q" placeholder="Buscar por nome ou documento" oninput="loadCustomers()" style="width:100%;margin-bottom:8px">
+    <table><thead><tr><th>Nome</th><th>Documento</th><th>Telefone</th><th>E-mail</th><th>Cidade</th></tr></thead><tbody id="c-list"></tbody></table></div>
+</section>
+
+<!-- VENDEDORES -->
+<section id="t-vend" class="tab" hidden>
+  <div class="top"><h2>Vendedores</h2></div>
+  <div class="card row"><input id="sl-name" placeholder="Nome"><input id="sl-pct" placeholder="Comissão % (sobre o lucro)" size="22" value="1.5"><button onclick="createSeller()">Cadastrar</button></div>
+  <div class="card"><table><thead><tr><th>Nome</th><th>Comissão</th><th>Status</th><th></th></tr></thead><tbody id="sl-list"></tbody></table></div>
+</section>
+</main>
+
+<dialog id="dlg"><div id="dlg-body"></div><button class="ghost" onclick="$('#dlg').close()">Fechar</button></dialog>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body></html>
